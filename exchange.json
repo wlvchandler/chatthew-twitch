@@ -1,0 +1,22 @@
+{
+    "stonks" : {
+	"HIT" : {
+	    "qty"   : 1000,
+	    "price" : 10.0,
+	    "last_buy" : ""
+	},
+	"FIGHT" : {
+	    "qty"   : 1000,
+	    "price" : 10.0,
+	    "last_buy" : ""
+	}
+    },
+    "portfolios" : {
+	"jaahska" : {
+	    "HIT":0, "FIGHT":0
+	},
+	"emilybloomshow" : {
+	    "HIT":0, "FIGHT":0
+	}
+    }
+}
