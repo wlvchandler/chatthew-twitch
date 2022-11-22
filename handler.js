@@ -74,6 +74,17 @@ app.post('/', (req, res) => {
 	                // STREAM OFFLINE
             if (notification.subscription.type == "stream.offline") {
                 console.log(`event:stream.offline at:${ts} channel:${broadcaster_s}`);
+                (async() => {
+                    var msg = 'chatthew.db_update offline cleanup successful';
+                    try {
+                        await db.query("update users set msg_today=0",[]);
+			await db.query("update stream set end_time='?' where id=(select id from stream order by id desc limit 1)",[ts]);
+                    } catch (err) {
+                        msg = `chatthew.db_update offline cleanup failed: ${err}`
+                    } finally {
+                        console.log(msg);
+                    }
+                })();		
             }
 
             // FOLLOW
