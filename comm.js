@@ -33,9 +33,9 @@ io.on("connect_error", (err) => {
 });
 
 
-function dispatch(msg) {
+function dispatch(msg, args=null) {
     if (!MainSocket) { return null; }
 
     console.log(`msg dispatch: ${msg}`);
-    io.emit(msg);
+    io.emit(msg, args);
 }

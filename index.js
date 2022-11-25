@@ -169,7 +169,7 @@ async function shoutout(channel, so_user) {
 	    'How grand!', 'Delightful! Just delightful.', 'Superb.',
 	    "If you don't follow, I'll hunt you. It's free, you weirdo.", 'Wow!'
 	];
-	const last_streaming = `They were last streaming ${channel_info.game_name}. ${comp[util.getRandomInt(0,comp.length-1)]}`;
+	var last_streaming = `They were last streaming ${channel_info.game_name}. ${comp[util.getRandomInt(0,comp.length-1)]}`;
 	if (!channel_info.game_name) {
 	    last_streaming = '';
 	}
@@ -208,6 +208,7 @@ chat_client.on('message', (channel, tags, message, self) => {
     }
         
     if (command === "so") {
+	chat_client.say(channel, `/shoutout villatx`);
 	shoutout(channel, args.shift().toLowerCase());
     }
 
@@ -268,18 +269,27 @@ chat_client.on('message', (channel, tags, message, self) => {
 
     // TODO: log chat message
 
-    // check if first message today
-    if (!inChat.has(tags['user-id'])) {
-	chat_client.say(channel, `📢${tags.username.toUpperCase()}📢`);
-	twitch_get_channel(tags['user-id']).then(info => {
-	    if (info.game_name) {
-		shoutout(channel, tags.username);
+    // check if first message today // TODO: batch for performance later
+    (async() => {
+	try {
+	    if (!inChat.has(tags['user-id'])) {
+		chat_client.say(channel, `📢${tags.username.toUpperCase()}📢`);
+		twitch_get_channel(tags['user-id']).then(info => {
+		    if (info.game_name) {
+			shoutout(channel, tags.username);
+		    }
+		}).catch(e => console.log(e));
+		console.log(`adding ${tags['user-id']} to set and ${tags['username']} to bornWaiting`);
+		inChat.add(tags['user-id']);
+		io.dispatch('userintro', tags.username);
+		//bornWaiting.push(tags['username']);
 	    }
-	}).catch(e => console.log(e));
-	console.log(`adding ${tags['user-id']} to set and ${tags['username']} to bornWaiting`);
-	inChat.add(tags['user-id']);
-	//bornWaiting.push(tags['username']);
-    }
+	} catch (err) {
+	    console.log(err);
+	} finally {
+	    db.query("update users set msg_today=1 where id=?",[tags['user-id']]).catch(e => {console.log(e)});
+	}
+    })();
 
     // add user to DB if doesn't already exist
     (async() => {
@@ -289,6 +299,18 @@ chat_client.on('message', (channel, tags, message, self) => {
     		const role = (tags['badges'] && Object.keys(tags['badges']).includes("broadcaster")) ? 'god' : ( tags['mod'] ? 'mod' : 'viewer');
 		await addUser([tags['user-id'], tags['username'], tags['display-name'], role]);
 	    }
+	    // db.query('select * from users where id=?',[tags['user-id']])
+	    // 	.then(rows => {
+	    // 	    if (!Object.keys(rows).length) {
+	    // 		const role = (tags['badges'] && Object.keys(tags['badges']).includes("broadcaster")) ? 'god' : ( tags['mod'] ? 'mod' : 'viewer');
+			
+	    // 	    }
+		    
+	    // 	    await db.query("update users set msg_today=1 where id=?",[tags['user-id']]);
+	    // 	})
+	    // 	.catch(err => {
+	    // 	    console.log(err);
+	    // 	});
 	} catch (err) {
 	    console.log(err);
 	}
